@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from keras import layers
 
-from tensorflow.keras.preprocessing.image import random_shear
+
 from tensorflow.keras.utils import image_dataset_from_directory
 
 
@@ -32,8 +32,8 @@ val_ds = image_dataset_from_directory(
     shuffle = True,
     seed=501,
     )
-
-val_ds = val_ds.map(lambda x, y: (layers.Rescaling(1.0 / 255)(x), y))
+#applying only rescale to val data idk i need this.
+# val_ds = val_ds.map(lambda x, y: (layers.Rescaling(1 / 255)(x), y))
 
 #layers stuff
 model = Sequential([
@@ -42,19 +42,18 @@ model = Sequential([
     layers.RandomFlip("horizontal"),
     layers.RandomRotation(0.1),
     
-    layers.Conv2D(16, 6, activation= 'relu'),
+    layers.Conv2D(16, 3, activation= 'relu'),
     layers.MaxPooling2D(),
 
-    layers.Conv2D(32, 6, activation= 'relu'),
+    layers.Conv2D(32, 3, activation= 'relu'),
     layers.MaxPooling2D(),
     
-    layers.Conv2D(64, 3, activation= 'relu'),
-    layers.Conv2D(64, 3, activation= 'relu'),
-    layers.Conv2D(64, 3, activation= 'relu'),
-    layers.MaxPooling2D(),
+    # layers.Conv2D(64, 3, activation= 'relu'),
+    # layers.MaxPooling2D(),
     
     
     layers.Flatten(),
+    layers.Dense(50), 
     layers.Dropout(0.5),
     layers.Dense(4, activation='softmax'),
 ])
@@ -68,7 +67,7 @@ model.compile(optimizer='sgd',
 m = model.fit(
     train_ds,
     validation_data= val_ds,
-    epochs = 10)
+    epochs = 50) #to run faster
 
 
 acc = m.history['accuracy']
@@ -95,3 +94,4 @@ plt.legend()
 plt.show()
 
 
+m.save("model 1")
