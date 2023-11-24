@@ -35,13 +35,10 @@ pre_img2 = model.predict(img2)
 
 
 filterwarnings("ignore") 
-
-
-
-
 fig, ax = plt.subplots()
 
 
+#FOR MED
 tf_img = io.read_file(path1)
 tf_img = image.decode_png(tf_img, channels=3)
 fig = plt.imshow(tf_img)
@@ -73,6 +70,7 @@ ax.axis('off')
 plt.show()
    
 
+#FOR LARGE 
 fig, ax = plt.subplots()
 
 
