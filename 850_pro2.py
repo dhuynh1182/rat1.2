@@ -1,12 +1,8 @@
-import numpy
-import pandas as pd
 import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Sequential
+import numpy as np 
 from keras import layers
-
-
-from tensorflow.keras.utils import image_dataset_from_directory
-
 
 img_height, img_width, channel = 100,100,'rgb'
 shape = (100,100,3)
@@ -15,60 +11,77 @@ val_path = './Project 2 Data/Data/Validation'
 test_path ='./Project 2 Data/Data/Test'
 
 print("importing Data")
-train_ds = image_dataset_from_directory(
-    train_path,
-    label_mode="categorical",
-    image_size=(100,100),
-    shuffle = True,
-    color_mode="rgb",
-    seed=501,
+
+train_datagen  = ImageDataGenerator(
+    rescale = 1./255,
+    shear_range = 0.2,
+    zoom_range = 0.2,
+    horizontal_flip=True,
+)
+
+val_datagen = ImageDataGenerator(
+    rescale = 1./255,
     )
 
-val_ds = image_dataset_from_directory(
-    val_path,
-    label_mode="categorical",
-    image_size=(100,100),
-    color_mode="rgb",
-    shuffle = True,
-    seed=501,
-    )
-#applying only rescale to val data idk i need this.
-# val_ds = val_ds.map(lambda x, y: (layers.Rescaling(1 / 255)(x), y))
+# batches of augmented image data
+train_generator = train_datagen.flow_from_directory(
+        train_path,  # this is the target directory
+        target_size=(img_height,img_width),     
+        batch_size=32,
+        class_mode='categorical',
+        color_mode='rgb',
+        shuffle = True
+)
+
+# batches of augmented image data
+val_generator = val_datagen.flow_from_directory(
+        val_path,  # this is the target directory
+        target_size=(img_height,img_width),  
+        batch_size=32,
+        class_mode='categorical',
+        color_mode='rgb',
+        shuffle = True
+)
+
+print(train_generator.class_indices)
+
 
 #layers stuff
-model = Sequential([
-    layers.Rescaling(1.0/255),
-    layers.RandomZoom(0.1),
-    layers.RandomFlip("horizontal"),
-    layers.RandomRotation(0.1),
+model = Sequential([  
     
-    layers.Conv2D(16, 3, activation= 'relu'),
+    layers.Conv2D(128, 3, activation= 'relu'),
     layers.MaxPooling2D(),
 
-    layers.Conv2D(32, 3, activation= 'relu'),
+    layers.Conv2D(32, 3, activation= 'leaky_relu'),
     layers.MaxPooling2D(),
+    layers.Dropout(0.5),
     
-    # layers.Conv2D(64, 3, activation= 'relu'),
-    # layers.MaxPooling2D(),
+    layers.Conv2D(64, 3, activation= 'relu'),
+    layers.MaxPooling2D(),
+    layers.Dropout(0.2),
     
     
     layers.Flatten(),
-    layers.Dense(50), 
+    layers.Dense(32), 
     layers.Dropout(0.5),
     layers.Dense(4, activation='softmax'),
 ])
 
 
 
-model.compile(optimizer='sgd',
+model.compile(optimizer='adam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
-m = model.fit(
-    train_ds,
-    validation_data= val_ds,
-    epochs = 50) #to run faster
 
+m = model.fit(
+    train_generator,
+    validation_data=val_generator ,
+    epochs = 60) 
+
+model.summary()
+
+model.save("model_D")
 
 acc = m.history['accuracy']
 val_acc = m.history['val_accuracy']
@@ -92,6 +105,3 @@ plt.title('Training and validation loss')
 plt.legend()
 
 plt.show()
-
-
-m.save("model 1")
